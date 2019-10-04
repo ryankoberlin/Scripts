@@ -19,8 +19,8 @@
 # Setting variables
 
 MEDIADIR="/Media/"
-FILE_PERM=$FILE_PERM
-DIR_PERM=$DIR_PERM
+FILE_PERM=644
+DIR_PERM=755
 
 _stat () {
 	stat -c %a "$1"
@@ -35,7 +35,6 @@ _ustat () {
 _date () {
         echo -n "$(date +%D\ :\ %H:%M:%S\ :)"
 }
-
 
 _fixperm () {
 	if [[ -f "$1" ]] && [[ $(_stat "$1" ) != $FILE_PERM ]]; then

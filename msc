@@ -1,0 +1,123 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename;
+
+my $self = basename($0);
+my $ARGC = scalar(@ARGV);
+
+my @list;
+my $out;
+my $path = qw(/Media/Movies/);                                 # This is just our default, gets changed in parseargs().
+my $cmd = qx(find $path -type f);
+my $tmpname;
+my $dryrun;
+my $setpath = 0;
+my $logfile = qq($ENV{"HOME"}/.mcu.log);                       # Just our default, gets changed in parseargs().
+
+my $exp2x = qr((?<=\))\ [0-9]+x[0-9]+(?=\.)); 			         # Remove 1000x200
+my $exp3x = qr((?<=\))\ [0-9]+x[0-9]+x[0-9]+(?=\.)); 		      # Remove 1000x200x32
+my $resexp = qr((?<=\s)[[:alnum:]]+-(?:1080p|720p).+(?=\.)); 	# Remove resolution references
+
+# Last resort, we clean everything. Common exts: sub|srt|png|.pl|nfo|mp4|mkv|mI0|m4v|jpg|idx|gif|avi
+# my $qrcln = qr(\)(?!.*\)).+(?=(sub|srt|png|.pl|nfo|mp4|mkv|mI0|m4v|jpg|idx|gif|avi)));
+#
+# TODO 
+# ADD DRY RUN OPTION - DONE
+# ADD LOG FILE 
+# ADD PATH FLAG - DONE
+
+sub helptext {
+        print<<EOF
+        $self usage:
+        -h\t\tShow this help usage
+        -d\t\tExecute dry run (No files will be renamed, log file will not be written)
+        -p [Path]\tSpecify path
+        -f [File]\tOutput to file (default is ~/.mcu.log)
+
+EOF
+}
+
+sub dostuff {
+   @list = split('\n', $cmd);
+   mculog('on');
+   foreach (@list) {
+   	if ($_ =~ /$exp2x/) {
+   		$tmpname = $_;
+   		$tmpname =~ s/$exp2x//g;
+         print "$_ ->> $tmpname\n"; 
+         #system("mv", "$_", "$tmpname") if (! $dryrun); 
+         }
+   	if ($_ =~ /$exp3x/) {
+   		$tmpname = $_;
+   		$tmpname =~ s/$exp3x//g;
+         print "$_ ->> $tmpname\n";
+         #system("mv", "$_", "$tmpname") if (! $dryrun);
+   	}
+   	if ($_ =~ /$resexp/) {
+   		$tmpname = $_;
+   		$tmpname =~ s/$resexp//g;                                # We end up with this tho: Fiction (1994) .nfo
+   		if ($tmpname =~ /(?<=\))\s\./) {
+   		  $tmpname =~ s/((?<=\))\s(?=\.))//;                     # We fix
+   		}
+   		print "$_ ->> $tmpname\n";
+         #	system("mv", "$_", "$tmpname") if (! $dryrun);
+         }
+   }
+   mculog('off');
+}
+
+sub mculog {
+        return if ($dryrun);
+        if ($_[0] =~ /on/) {
+                open(FH, '>>', $logfile) or die "Could not open $logfile $!";
+        }
+        if ($_[0] =~ /off/) {
+                close(FH);
+        }
+}
+
+sub parseargs {
+        my $c = 0;
+        
+        foreach (@_) {
+                if ($_[$c] =~ /-h/) {
+                        helptext();
+                        return;
+                }
+                if ($_[$c] =~ /-d/) {
+                        $dryrun = 1;
+                        if ($ARGC == 1) {
+                                dostuff();
+                        } else {
+                        $c++;
+                }
+                }
+                if ($_[$c] =~ /-p/) {
+                        $path = $_[($c + 1)] if ($_[($c + 1)]);
+                        if (! -e $path) {
+                                print STDERR "$path does not exist\n";
+                                return;
+                        }
+                        if (! $_[($c + 1)]) {
+                                print STDERR "\t-p option requires argument\n\n";
+                                helptext();
+                                return;
+                        }
+                }
+                if ($_[$c] =~ /-f/) {
+                        $logfile = $_[($c + 1)] if ($_[($c + 1)]);
+                        if (! $_[($c + 1)]) {
+                                print STDERR "\t-f option requires argument\n\n";
+                                helptext();
+                                return;
+                        }
+
+                }
+                $c++;
+        }
+}
+
+parseargs(@ARGV);

@@ -1,5 +1,12 @@
 #!/usr/bin/perl
 
+#########################
+# Media Clean Up Utility
+# (c) Ryan Oberlin 2019
+#
+# Useful tool for cleaning up movie names, and 
+# for correcting common naming mistakes
+
 use strict;
 use warnings;
 

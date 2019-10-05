@@ -28,9 +28,6 @@ my $exp2x = qr((?<=\))\ [0-9]+x[0-9]+(?=\.)); 			         # Remove 1000x200
 my $exp3x = qr((?<=\))\ [0-9]+x[0-9]+x[0-9]+(?=\.)); 		      # Remove 1000x200x32
 my $resexp = qr((?<=\s)[[:alnum:]]+-(?:1080p|720p).+(?=\.)); 	# Remove resolution references
 
-# Last resort, we clean everything. Common exts: sub|srt|png|.pl|nfo|mp4|mkv|mI0|m4v|jpg|idx|gif|avi
-# my $qrcln = qr(\)(?!.*\)).+(?=(sub|srt|png|.pl|nfo|mp4|mkv|mI0|m4v|jpg|idx|gif|avi)));
-#
 # TODO 
 # ADD DRY RUN OPTION - DONE
 # ADD LOG FILE 
@@ -49,7 +46,7 @@ EOF
 
 sub dostuff {
    @list = split('\n', $cmd);
-   mculog('on');
+   #mculog('on');
    foreach (@list) {
    	if ($_ =~ /$exp2x/) {
    		$tmpname = $_;
@@ -73,10 +70,11 @@ sub dostuff {
          system("mv", "$_", "$tmpname") if (! $dryrun);
          }
    }
-   mculog('off');
+   #mculog('off');
 }
 
 sub mculog {
+        # TODO : Fix this with pipe so we send all stdout to $logfile
         return if ($dryrun);
         if ($_[0] =~ /on/) {
                 open(FH, '>>', $logfile) or die "Could not open $logfile $!";
@@ -125,6 +123,7 @@ sub parseargs {
                 }
                 $c++;
         }
+        dostuff();
 }
 
 parseargs(@ARGV);

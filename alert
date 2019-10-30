@@ -35,6 +35,7 @@ hibernate_loop() {
 
 while true;
 do
+    PERC=$(apm -l)
     # Sleep if we're plugged in
     if [[ $(apm -a) == 1 ]]; then
         sleep 900

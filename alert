@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Battery alert script for DWM
+# Ryan Oberlin 2019
+
+xpos=1280
+ypos=0
+width=320
+height=100
+fgcolor=grey80
+bgcolor="darkred"
+font=hack
+
+parameters="  -x $xpos -y $ypos -w $width -h $height"
+parameters+=" -fn $font"
+parameters+=" -ta c -bg $bgcolor -fg $fgcolor"
+parameters+=" -title-name battery_noti"
+parameters+=" -e button1=exit:3"
+
+warning_loop() {
+    # endless loop
+    while true; do
+        PERC=$(apm -l)
+        echo "Battery percentage at ${PERC}%"
+    done
+}
+
+hibernate_loop() {
+    for ((i=60;i>0;i--)); do
+    PERC=$(apm -l)
+        echo "Hibernation in ${i} seconds!"
+        sleep 1
+    done
+}
+
+while true;
+do
+    # Sleep if we're plugged in
+    if [[ $(apm -a) == 1 ]]; then
+        sleep 900
+    fi
+    if (( "$PERC" > 30 )); then
+        sleep 900
+    fi
+    if (( "$PERC" <= 10 )); then 
+        hibernate_loop | dzen2 $parameters
+        if [[ $? == 3 ]]; then
+            # Got one minute to plug in if we cancelled the message
+            sleep 60
+        else
+            # If not, we sleep
+            apm -Z
+    fi
+    elif (( "$PERC" <= 30 )) && (( "$PERC" > 10 )); then
+        # Backgrounding loop so we can proceed with logic if warning is ignored
+        warning_loop | dzen2 $parameters &
+        sleep 300
+    fi
+done
+    

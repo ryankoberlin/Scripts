@@ -38,10 +38,10 @@ do
     PERC=$(apm -l)
     # Sleep if we're plugged in
     if [[ $(apm -a) == 1 ]]; then
-        sleep 900
+        sleep 300
     fi
     if (( "$PERC" > 30 )); then
-        sleep 900
+        sleep 300
     fi
     if (( "$PERC" <= 10 )); then 
         hibernate_loop | dzen2 $parameters

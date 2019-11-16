@@ -20,6 +20,10 @@ parameters+=" -e button1=exit:3"
 warning_loop() {
     # endless loop
     while true; do
+        # There's a chance we can get stuck in the endless loop, so we return if we're charging.
+        if [[ $(apm -a) == 1 ]]; then
+            return
+        fi
         PERC=$(apm -l)
         echo "Battery percentage at ${PERC}%"
     done
@@ -27,7 +31,10 @@ warning_loop() {
 
 hibernate_loop() {
     for ((i=60;i>0;i--)); do
-    PERC=$(apm -l)
+        if [[ $(apm -a) == 1 ]]; then
+            return
+        fi
+        PERC=$(apm -l)
         echo "Hibernation in ${i} seconds!"
         sleep 1
     done
@@ -44,6 +51,7 @@ do
         sleep 300
     fi
     if (( "$PERC" <= 10 )); then 
+        echo "hibernate loop $PERC"
         hibernate_loop | dzen2 $parameters
         if [[ $? == 3 ]]; then
             # Got one minute to plug in if we cancelled the message

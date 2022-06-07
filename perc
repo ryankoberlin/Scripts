@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+my $tmp;
+my $out;
+my $reduce;
+my $ARGC = scalar(@ARGV);
+my $SELF = basename($0);
+
+sub convert {
+   my @time = split(":", $_[0]);
+   my $hrs = $time[0];
+   my $min = $time[1];
+   my $sec = $time[2];
+   
+   print "Minutes must be less than 60\n" if ($min >= 60); 
+   print "Secondss must be less than 60\n" if ($sec >= 60);
+   
+   return (($hrs * 3600) + ($min * 60) + $sec)   
+}
+
+sub helptext {
+   my $retstr = sprintf("$SELF requires three arguments:\n\n\t$SELF [Original time] [New time]\n\n");
+   return $retstr;
+}
+
+if (($ARGC < 2) || (grep(/-h/, @ARGV))) {
+   print helptext();
+   exit;
+}
+if (($ARGV[1] || $ARGV[2]) !~ /[0-9]{1,3}\:[0-9]{1,2}\:[0-9]{1,2}/) {
+   print "Argument is not a valid timestamp\n" if (! grep(/-s/, @ARGV));
+   exit;
+}
+
+my $a = convert($ARGV[0]);
+my $b = convert($ARGV[1]);
+print "Numbers are equal\n" if ($a == $b);
+
+$tmp = ($a - $b);
+$out = ($tmp/$a);
+
+$reduce = "Increase" if ($out*100.00 >= 1);
+$reduce = "Reduction" if ($out*100.00 < 1);
+$reduce = "" if (grep(/-s/, @ARGV));
+
+printf("%.2f%% $reduce\n", ($out*100.00));

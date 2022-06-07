@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename;
+use Time::Local;
+use POSIX;
+
+# my $file = "nas074.log";
+my $file = $ARGV[0];
+my $self = basename($0);
+my $start;
+my $end;
+
+sub parse { # File parser to generate $startln $endln
+   my $tmp1; # startln
+   my $tmp2; # endln
+   my $file = $_[0];
+   open(FH, '<', $file) or die "Couldn't open $file $!\n";
+   while (<FH>) {
+      $tmp1 = cut($_) if (grep(/Nastran\ started/, $_));
+      $tmp2 = cut($_) if (grep(/Nastran\ finished/, $_));
+   }
+   close(FH);
+   if (! $tmp1) {
+      print "Start point not found\n";
+      exit;
+   }
+
+   if (! $tmp2) {
+      print "End point not found\n";
+      exit;
+   }
+
+   return ($tmp1, $tmp2);
+}
+
+sub cut {
+   # Thanks to FORTRAN these should always be 28 character strings
+   # MSC Nastran started Wed Oct  2 13:32:07 EDT 2019
+   # MSC Nastran finished Wed Oct  2 17:21:50 EDT 2019
+   my $retstr = substr($_[0], -29); 
+   return $retstr;
+}
+
+sub convert { # Returns epoch timestamp so we can math
+
+   my %months = (
+   Jan => 0,
+   Feb => 1,
+   Mar => 2,
+   Apr => 3,
+   May => 4,
+   Jun => 5,
+   Jul => 6,
+   Aug => 7,
+   Sep => 8,
+   Oct => 9,
+   Nov => 10,
+   Dec => 11,
+   );
+
+   my $str = $_[0];
+   my @ARSTR = ();
+   $str =~ s/\:/\ /g; 
+   $str =~ s/\s+/\ /g; # Strip out extra spaces
+   
+   @ARSTR = split(' ', $str);
+
+   # Array structure:
+   # 0   1   2 3  4  5  6   7
+   # Wed Oct 2 17 21 50 EDT 2019
+   
+   my $dom = $ARSTR[0];
+   my $mon = $months{$ARSTR[1]};
+   my $day = $ARSTR[2];
+   my $hrs = $ARSTR[3];
+   my $min = $ARSTR[4];
+   my $sec = $ARSTR[5];
+   my $tzn = $ARSTR[6];
+   my $year = $ARSTR[7];
+
+   return timelocal($sec,$min,$hrs,$day,$mon,$year);
+}
+
+sub localtm {
+#   return strftime("\%H:\%M:\%S", gmtime($_[0]));
+   my $ret_time = sprintf("%.2f", ($_[0] / 3600.00));
+   return $ret_time;
+}
+
+my ($startln, $endln) = parse($file);
+$start = convert($startln);
+$end = convert($endln);
+my $duration = ($end - $start);
+
+print "Run started:\t$startln";
+print "Run ended:\t$endln";
+print "Duration:\t", localtm($duration), " hrs\n\n";

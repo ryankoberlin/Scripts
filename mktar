@@ -1,0 +1,21 @@
+#!/bin/bash
+
+SRCDIR=${PWD}
+
+dirlist=" "
+for i in $@; 
+do 
+dirlist+="$i "
+done
+
+for dir in $dirlist; 
+do
+	TARNAME=${dir}.tar.gz
+	pushd 2>&1>/dev/null $dir
+	echo "Creating $TARNAME"
+	tar -zcvf $TARNAME ./* # TODO: add option for -v 
+	mv $TARNAME $SRCDIR
+	popd 2>&1>/dev/null 
+done
+
+

@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename;
+
+my $ARGC = scalar(@ARGV);
+my $SELF = basename($0);
+
+my @NUMS = ();
+my $NUM = 0;
+my $ret = "";
+
+sub helptext {
+   print<<EOM
+
+   $SELF usage:
+      -h    Show this help text
+
+      $SELF accepts input from stdin or as arguments. Example: 
+      echo '04:20:35 
+      >04:19:09 
+      >04:21:32
+      >04:19:49
+      ' | $SELF
+
+      OR
+
+      runavg 04:20:35 04:19:09 04:21:32 04:19:49
+
+EOM
+}
+
+sub convert {
+   my @time = split(":", $_[0]);
+   my $hrs = $time[0];
+   my $min = $time[1];
+   my $sec = $time[2];
+   
+   return "Minutes must be less than 60\n" if ($min >= 60); 
+   return "Seconds must be less than 60\n" if ($sec >= 60);
+
+   return (($hrs * 3600) + ($min * 60) + $sec);
+}
+
+
+sub avg {
+   my $NUM = 0;
+   foreach (@_) {
+      $NUM += convert($_);
+   }
+
+   return sprintf("%.2f minutes\n", ($NUM/scalar(@_))/60);
+}
+
+if ($ARGC != 0) {
+   argparse();
+} else {
+   diaparse();
+}
+
+sub argparse {
+   foreach (@ARGV) {
+      if ($_ =~ /-h/) {
+         helptext();
+      }
+   if (( $_ =~ /^\n/) || (scalar(@NUMS) == ($ARGC - 1))) {
+      if (scalar(@NUMS) > 0 ) {
+         push(@NUMS, $_);
+         $ret = avg(@NUMS);
+         print $ret;
+      }
+      @NUMS = ();
+   } else {
+      chomp($_);
+      push(@NUMS, $_);
+      }
+   }
+}
+
+sub diaparse {
+   foreach (<>) { # diamond expects input line by line
+      if ($_ =~ /^\n/) {
+         if (scalar(@NUMS) > 0 ) {
+            $ret = avg(@NUMS);
+            print $ret;
+         }
+         @NUMS = ();
+      } else {
+         chomp($_);
+         push(@NUMS, $_);
+      }
+   }
+}
+
+

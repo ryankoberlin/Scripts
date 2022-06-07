@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+use File::Basename;
+use strict;
+use warnings;
+
+my %values = (  0 => "0",  1 => "1",  2 => "2",  3 => "3",  4 => "4",  5 => "5",  6 => "6",  7 => "7",  8 => "8",  9 => "9",  A => "10",  B => "11",  C => "12",  D => "13",  E => "14",  F => "15",  a => "10",  b => "11",  c => "12",  d => "13",  e => "14",  f => "15",);
+
+my @in_str = split('', join('', @ARGV)) or die "Error! $!\n";
+my @hex_str0 = @in_str[0..1];
+my @hex_str1 = @in_str[2..3];
+my @hex_str2 = @in_str[4..5];
+my $name = basename($0);
+
+if (scalar @in_str != 6) {
+   print "Error! input must be six characters\nex: $name AABBCC\n";
+   exit;
+}
+
+sub convert {
+# Expecting an array with two indexes;
+   if (scalar @_ != 2) {
+      print "Error in subroutine\n";
+      exit;
+   }
+   return (($values{$_[0]} * (16**1)) + ($values{$_[1]} * (16**0)));
+}
+
+print convert(@hex_str0), ",", convert(@hex_str1), ",", convert(@hex_str2), "\n";

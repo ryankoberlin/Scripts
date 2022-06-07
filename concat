@@ -1,0 +1,120 @@
+#!/bin/bash
+
+##################################
+# Simple CSV concatanation script
+# Initial commit roberli1 FoMoCo
+# 08-21-2019
+
+# Default EXT is csv
+EXT="csv"
+SELF=$(basename $0)
+DATE=$(date +%m%d%y)
+NUMBER=1
+OUTFILE="concat-${DATE}-${NUMBER}.csv"
+ARGS=${@}
+
+tput bold # Set bold
+
+_helptxt () {
+	cat<<EOM
+Help Usage:
+
+	-h	Show this help
+	-y	Skip verification
+	-b	Enable file backups
+
+EOM
+	exit 0
+}
+
+_verify () {
+	if [[ $NOVERIFY ]]; then 
+		echo -en "Skipping Verification...\n"
+		return
+	else
+	read -p "Run concat in this directory? y/N " input
+	case $input in 
+		y|Y)
+		return 	
+		;;
+		n|N)
+		exit 0
+		;;
+		*)
+		exit 0
+		;;
+	esac
+	fi	
+}
+
+for i in ${ARGS[*]};
+	do 
+		if [[ $i == -h ]]; then
+		_helptxt
+		exit 0		
+		ARGS=("${ARGS[*]:1}")
+		fi
+		if [[ $i == -b ]]; then
+		echo -en "Backup enabled\n"
+		BAK=".pre_cat"
+		ARGS=("${ARGS[*]:1}")
+		fi
+		if [[ $i == -y ]]; then
+		NOVERIFY=1
+		ARGS=("${ARGS[*]:1}")
+		fi
+done
+
+# Run verification function
+_verify
+
+# Initalize our array
+declare -g FILES
+
+# Find the oldest file in the directory
+OLDFILE=$(ls -rt1 --hide=${SELF} --hide=concat-* --hide=*.sh|head -n1)
+# Take the CSV field headers from the oldest file
+HEADER=$(head -n1 ${OLDFILE})
+
+# checking for files
+if [[ ! $(ls --hide=${SELF} --hide=concat*| grep .${EXT}$) ]]; then
+	echo -en "No files found, exiting\n"
+	exit 127
+fi
+
+# Populate the array
+for i in $(ls --hide=${SELF} --hide=concat*| grep .${EXT}$); 
+	do
+		FILES+=("${i}");
+	done
+
+_concat () {
+	OUTFILE=$1
+	echo -en "Files found:\n"
+	for i in ${FILES[@]};
+		do 
+			echo $i
+		done
+	# Remove the CSV header from each file
+	for FILE in ${FILES[@]}; 
+		do 
+		echo -en "Removing header from ${FILE}\n"
+		sed -i${BAK} '1d' $FILE
+	done
+	echo -en "Adding header to ${OUTFILE}\n"
+	echo $HEADER >> $OUTFILE
+	echo -en "Concatinating ${FILES[@]} to ${OUTFILE}\n"
+	cat ${FILES[@]} | sort | uniq >> $OUTFILE
+}
+
+# Checking to make sure we don't override existing files:
+if [[ -f ${OUTFILE} ]]; then
+		OLDOUT=${OUTFILE}
+		let NUMBER=NUMBER+1
+		NEWOUT="concat-${DATE}-${NUMBER}.csv"
+		echo -en "${OLDOUT} exists, creating file ${NEWOUT}\n"
+		_concat ${NEWOUT}
+else 
+		echo -en "Using file ${OUTFILE}\n"
+		_concat $OUTFILE
+fi

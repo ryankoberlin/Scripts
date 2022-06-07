@@ -1,0 +1,14 @@
+#!/bin/bash
+
+lfqstat=/opt/nic/bin/fqstat
+lfqutil=/opt/nic/bin/fqutil
+
+$lfqstat -u all -a lsdyna -s r | awk '/[0-9]{3}\:[0-9]{2}\:[0-9]{2}/{print $1}' | while read id; 
+	do 
+		last_up=$($lfqutil -o ${id} | tail -n2| awk '/updated/{print $2, $3}')
+		if [[ ! ${last_up} ]]; then
+			echo "No updated time for ${id}"
+		else
+			echo "${id} ${last_up}"
+		fi
+done

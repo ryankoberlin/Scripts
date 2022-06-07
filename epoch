@@ -1,0 +1,48 @@
+#!/usr/bin/python
+
+####################################################
+# Simple Python script to convert epoch timestamps
+# Initial commit 08-05-2019 roberli1 FoMoCo
+
+import sys
+from os import path
+from time import time, strftime, localtime, ctime
+
+argc = len(sys.argv)
+
+def helptext():
+	helpstr = """
+ {} [-lc]
+  -l\t\tProvides local time in human readable and UNIX epoch time
+  -c [epoch]\tConvert UNIX epoch timestame to local time
+  -h\t\tShow this help
+""".format(path.basename(__file__))
+	return helpstr
+
+def epoch2local(epoch): # convert epoch to local time
+	return ctime(int(epoch))
+
+def getlocal(): # return local and epoch time
+	x =	strftime('%H:%M:%S')
+	y = time()
+	retstr = "Current Time:\t" + str(x) + "\nEpoch Time:\t" + str(y)
+	return retstr
+
+if argc > 1:
+	if sys.argv[1] == '-h':
+		print(helptext())
+		sys.exit(0)
+	if sys.argv[1] == '-c':
+		print(epoch2local(sys.argv[2]))
+		sys.exit(0)
+	if sys.argv[1] == '-l':
+		print(getlocal())
+		sys.exit(0)
+	else:
+		print("Unrecognized option: " + sys.argv[argc - 1])
+		print(helptext())
+		sys.exit(0)
+else:
+	print(helptext())
+	sys.exit(0)
+

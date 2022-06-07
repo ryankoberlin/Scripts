@@ -1,0 +1,62 @@
+#!/bin/bash
+
+
+# TODO: Add user defined file
+
+SELF=$(basename $0)
+CDIR=$(basename ${PWD})
+SLEEP=60
+
+_math () {
+	TEMPFILES=$1
+	RET=$(ls -l ${TEMPFILES}* | awk '{print $5}'|paste -sd+|bc)
+	echo "$(echo "$RET/1073741824.0"|bc)gb"
+}
+
+_parse () {
+FILE=nastran_tmp.out
+for i in $(awk '{print $3}' $FILE |sort -b|uniq|sed '/^$/d'); 
+	do 
+	 echo -en "$i $(grep $i $FILE |awk '{print $6}'|sort -b|uniq |sort -rnk1|head -n1)\n"
+done
+}
+
+_disk () {
+LOGS=$(find ${PWD} -type f -iname \*.log ! -iname numa.log -exec basename {} \;|uniq) # Should return single value
+while ps faux|grep -iqE "${CDIR}\/(0|1|2|3)";
+	do
+	for i in ${CDIRL}; 
+		do
+			TMPPATH=$(grep SDIR ${i}/${LOGS} | awk -F\= '{print $2}')
+			echo -en "$(date +%F\ %H:%M:%S) Run${i}: ${TMPPATH} - "
+			_math $TMPPATH
+	done
+	echo 
+	sleep $SLEEP
+done
+
+echo -en "\n\n****DONE****\n\n"
+}
+
+_help () {
+cat<<EOM
+$SELF usage:
+	-h	Show this help section
+	-p	Show maximum tmp useage for each run
+
+	Default behavior with no arguments is to log to 'nastran_tmp.out'
+EOM
+exit
+}
+
+case $1 in 
+	-h|--help)
+		_help
+	;;
+	-p)
+		_parse
+	;;
+	*)
+	_disk >> nastran_tmp.out
+	;;
+esac

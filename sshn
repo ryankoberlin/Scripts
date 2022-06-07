@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Basename;
+
+my $name = basename($0);
+
+sub showhelp {
+print<<EOF;
+SSH directly to a compute node by jumping through the head node\n
+Usage:
+\t$name [NODE]
+EOF
+exit;
+}
+
+if (((scalar @ARGV) < 1) || (! grep(/^hpc/, @ARGV) )) {
+   showhelp();
+} else {
+   my $destnode = $ARGV[0];
+   my $headnode = unpack("(A6)*", $destnode);
+   print "$ENV{HOSTNAME} -> $headnode -> $destnode\n";
+   exec "ssh -qt -o NumberOfPasswordPrompts=0 $headnode ssh $destnode"
+}

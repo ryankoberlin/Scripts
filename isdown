@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Quick script to check nodes of a job to see if any are offline/down
+# roberli1 FoMoCo 2021
+
+JOB=$1
+SITE=domain.com
+
+if [[ ! $JOB =~ [0-9]{7}.hpcq ]]; then
+	echo "Only argument must be valid job ID"
+	exit 1
+fi
+
+NODES=$(fqstat -fz ${JOB} | awk '/Nodes\:/{gsub(/,/, "|"); $1 = ""; print $0}' )
+MACH=$(echo ${NODES} | grep -oP 'hpc[a-z][0-9]{2}' | sort -b |uniq )
+USER=$(fqstat -o user ${JOB} | tail -n1 | sed -E 's/^([a-z0-9]+)\s+/\1/g')
+
+IsDogeGone() {
+	OUT=$(fqmgr -a ${MACH} | grep -E ${NODES} | grep -i -e 'down' -e 'offline')
+	if [[ ${OUT} ]]; then
+		echo "${OUT}"
+cat<<EOM
+
+${USER}@${SITE}
+
+Failed LSDyna job ${JOB}
+
+Hello,
+
+I’m reaching out to you to let you know that one of the nodes that one of your LSDyna jobs (${JOB}) was running on has experienced hardware failure, and as a result the job has been terminated. 
+
+Let me know if you need help resubmitting the job, an I’ll be happy to assist. 
+
+EOM
+fi
+
+}
+
+IsDogeGone
+
+#DogeGone

@@ -36,3 +36,5 @@ README.md - This readme file
 sshn - Script to ssh to node through the cluster's headnode
 
 trace.pl - Script to parse certain information from PBS
+
+mknote.sh - Script to create a simple note in a directory
